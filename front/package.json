@@ -5,6 +5,13 @@
     "start": "ng serve",
     "test": "jest",
     "test:watch": "jest --watch",
+
+
+    "test:unit": "jest --coverage --coverageDirectory=coverage/unit --testMatch='**/*.spec.ts'",
+    "test:integration": "jest --coverage --coverageDirectory=coverage/integration --testMatch='**/*.integration.spec.ts'",
+    "coverage:merge": "mkdir -p coverage/merged && cp coverage/unit/coverage-final.json coverage/merged/unit.json && cp coverage/integration/coverage-final.json coverage/merged/integration.json && nyc merge coverage/merged coverage/merged/coverage.json && nyc report --reporter=html --temp-directory=coverage/merged --report-dir=coverage/combined-report",
+    "test:coverage": "npm run test:unit && npm run test:integration && npm run coverage:merge",
+
     "lint": "ng lint",
     "e2e": "ng e2e",
     "e2e:ci": "ng run yoga:e2e-ci",
