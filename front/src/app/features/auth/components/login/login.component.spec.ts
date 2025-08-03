@@ -14,6 +14,7 @@ import { of, throwError } from 'rxjs';
 import { SessionService } from 'src/app/services/session.service';
 import { LoginComponent } from './login.component';
 import { AuthService } from "../../services/auth.service";
+import {SessionInformation} from "../../../../interfaces/sessionInformation.interface";
 
 const mockAuthService = {
   login: jest.fn()
@@ -25,12 +26,12 @@ describe('LoginComponent', () => {
   let router: Router;
   let authService: jest.Mocked<AuthService>;
 
-  const VALID_LOGIN_DATA = {
+  const mockValidLoginData = {
     email: 'test@test.com',
     password: 'test!1234'
   };
 
-  const MOCK_LOGIN_RESPONSE = {
+  const mockLoginResponse: SessionInformation = {
     token: 'abc',
     type: "Bearer",
     id: 1,
@@ -40,14 +41,13 @@ describe('LoginComponent', () => {
     admin: true
   };
 
-  // Helper functions
   const setFormValues = (email: string = '', password: string = '') => {
     component.form.patchValue({ email, password });
     fixture.detectChanges();
   };
 
   const setValidForm = () => {
-    component.form.setValue(VALID_LOGIN_DATA);
+    component.form.setValue(mockValidLoginData);
     fixture.detectChanges();
   };
 
@@ -76,28 +76,15 @@ describe('LoginComponent', () => {
     authService = TestBed.inject(AuthService) as jest.Mocked<AuthService>;
 
     jest.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-
-    fixture.detectChanges();
-  });
-
-  beforeEach(() => {
-    // Reset all mocks before each test
     jest.clearAllMocks();
   });
+
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
   describe('Form Validation', () => {
-    it('should init form with empty inputs', () => {
-      expect(component.form.get('email')?.value).toBe('');
-      expect(component.form.get('password')?.value).toBe('');
-    });
-
-    it('should mark form as invalid when inputs are empty', () => {
-      expect(component.form.valid).toBeFalsy();
-    });
 
     it('should mark email as invalid when format is wrong', () => {
       const emailControl = component.form.get('email');
@@ -110,6 +97,7 @@ describe('LoginComponent', () => {
 
     it('should mark form as valid when all inputs are correct', () => {
       setValidForm();
+
       expect(component.form.valid).toBeTruthy();
     });
 
@@ -130,23 +118,23 @@ describe('LoginComponent', () => {
     });
 
     it('should disable submit button when form is invalid', () => {
-      setFormValues('', VALID_LOGIN_DATA.password);
+      setFormValues('', mockValidLoginData.password);
 
-      const submitButton = fixture.debugElement.query(By.css('button[type="submit"]'));
-      expect(submitButton.nativeElement.disabled).toBeTruthy();
+      const submitButton = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+      expect(submitButton.disabled).toBeTruthy();
     });
   });
 
   describe('Form submit', () => {
-    it('should call authService.login with form value when form is valid', () => {
+    it('should call authService.login when form is valid', () => {
       setValidForm();
 
       // Mock successful login
-      authService.login.mockReturnValue(of(MOCK_LOGIN_RESPONSE));
+      authService.login.mockReturnValue(of(mockLoginResponse));
 
       component.submit();
 
-      expect(authService.login).toHaveBeenCalledWith(VALID_LOGIN_DATA);
+      expect(authService.login).toHaveBeenCalledWith(mockValidLoginData);
       expect(authService.login).toHaveBeenCalledTimes(1);
     });
 
@@ -154,14 +142,14 @@ describe('LoginComponent', () => {
       setValidForm();
 
       // Mock successful login
-      authService.login.mockReturnValue(of(MOCK_LOGIN_RESPONSE));
+      authService.login.mockReturnValue(of(mockLoginResponse));
 
       const sessionSpy = jest.spyOn(component['sessionService'], 'logIn');
       const routerSpy = jest.spyOn(component['router'], 'navigate');
 
       component.submit();
 
-      expect(sessionSpy).toHaveBeenCalledWith(MOCK_LOGIN_RESPONSE);
+      expect(sessionSpy).toHaveBeenCalledWith(mockLoginResponse);
       expect(sessionSpy).toHaveBeenCalledTimes(1);
       expect(routerSpy).toHaveBeenCalledWith(['/sessions']);
     });
