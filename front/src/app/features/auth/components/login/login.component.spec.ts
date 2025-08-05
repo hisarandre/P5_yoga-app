@@ -1,5 +1,6 @@
 import { HttpClientModule } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NgZone } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,27 +9,21 @@ import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
-import { By } from '@angular/platform-browser';
 import { expect } from '@jest/globals';
-import { of, throwError } from 'rxjs';
+import {BehaviorSubject, of, throwError} from 'rxjs';
 import { SessionService } from 'src/app/services/session.service';
 import { LoginComponent } from './login.component';
 import { AuthService } from "../../services/auth.service";
 import {SessionInformation} from "../../../../interfaces/sessionInformation.interface";
 
-const mockAuthService = {
-  login: jest.fn()
-};
-
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let router: Router;
-  let authService: jest.Mocked<AuthService>;
+  let ngZone: NgZone;
 
-  const mockValidLoginData = {
-    email: 'test@test.com',
-    password: 'test!1234'
+  const componentSelectors = {
+    submitButton: '[data-testid="submit-button"]'
   };
 
   const mockLoginResponse: SessionInformation = {
@@ -37,8 +32,23 @@ describe('LoginComponent', () => {
     id: 1,
     username: "test@test.com",
     firstName: "Test",
-    lastName: "Test",
+    lastName: "User",
     admin: true
+  };
+
+  const mockValidLoginData = {
+    email: 'test@test.com',
+    password: 'test!1234'
+  };
+
+  const mockSessionService = {
+    sessionInformation: mockLoginResponse,
+    logIn: jest.fn(),
+    isLoggedSubject: new BehaviorSubject<boolean>(false),
+  };
+
+  const mockAuthService = {
+    login: jest.fn().mockReturnValue(of(mockLoginResponse))
   };
 
   const setFormValues = (email: string = '', password: string = '') => {
@@ -55,7 +65,7 @@ describe('LoginComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [LoginComponent],
       providers: [
-        SessionService,
+        { provide: SessionService, useValue: mockSessionService },
         { provide: AuthService, useValue: mockAuthService }
       ],
       imports: [
@@ -73,95 +83,118 @@ describe('LoginComponent', () => {
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
-    authService = TestBed.inject(AuthService) as jest.Mocked<AuthService>;
-
-    jest.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+    ngZone = TestBed.inject(NgZone);
+    jest.spyOn(router, 'navigate').mockResolvedValue(true);
     jest.clearAllMocks();
   });
-
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('Form Validation', () => {
+  describe('Form Validation test suites', () => {
 
     it('should mark email as invalid when format is wrong', () => {
+      // arrange
       const emailControl = component.form.get('email');
+
+      // act
       emailControl?.setValue('invalid-email');
       emailControl?.markAsTouched();
 
+      // assert
       expect(emailControl?.invalid).toBeTruthy();
       expect(emailControl?.errors?.['email']).toBeTruthy();
     });
 
     it('should mark form as valid when all inputs are correct', () => {
+      // act
       setValidForm();
 
+      // assert
       expect(component.form.valid).toBeTruthy();
     });
 
     it('should require email', () => {
+      // arrange
       const emailControl = component.form.get('email');
+
+      // act
       emailControl?.setValue('');
       emailControl?.markAsTouched();
 
+      // assert
       expect(emailControl?.errors?.['required']).toBeTruthy();
     });
 
     it('should require password', () => {
+      // arrange
       const passwordControl = component.form.get('password');
+
+      // act
       passwordControl?.setValue('');
       passwordControl?.markAsTouched();
 
+      // assert
       expect(passwordControl?.errors?.['required']).toBeTruthy();
     });
 
     it('should disable submit button when form is invalid', () => {
+      // act
       setFormValues('', mockValidLoginData.password);
 
-      const submitButton = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+      // assert
+      const submitButton = fixture.nativeElement.querySelector(componentSelectors.submitButton) as HTMLButtonElement;
       expect(submitButton.disabled).toBeTruthy();
     });
   });
 
-  describe('Form submit', () => {
-    it('should call authService.login when form is valid', () => {
+  describe('Login on submit test suites', () => {
+    it('should call AuthService.login with form data', () => {
+      // act
       setValidForm();
-
-      // Mock successful login
-      authService.login.mockReturnValue(of(mockLoginResponse));
-
       component.submit();
 
-      expect(authService.login).toHaveBeenCalledWith(mockValidLoginData);
-      expect(authService.login).toHaveBeenCalledTimes(1);
+      // assert
+      expect(mockAuthService.login).toHaveBeenCalledWith(mockValidLoginData);
     });
 
-    it('should update session and navigate on successful login', () => {
+    it('should call SessionService.logIn on successful auth', () => {
+      mockAuthService.login.mockReturnValue(of(mockLoginResponse));
+      // act
       setValidForm();
-
-      // Mock successful login
-      authService.login.mockReturnValue(of(mockLoginResponse));
-
-      const sessionSpy = jest.spyOn(component['sessionService'], 'logIn');
-      const routerSpy = jest.spyOn(component['router'], 'navigate');
-
       component.submit();
 
-      expect(sessionSpy).toHaveBeenCalledWith(mockLoginResponse);
-      expect(sessionSpy).toHaveBeenCalledTimes(1);
-      expect(routerSpy).toHaveBeenCalledWith(['/sessions']);
+      // assert
+      expect(mockSessionService.logIn).toHaveBeenCalledWith(mockLoginResponse);
     });
 
-    it('should set onError to true if login fails', () => {
+    it('should navigate on successful login', () => {
+      // arrange
+      mockAuthService.login.mockReturnValue(of(mockLoginResponse));
+      mockSessionService.logIn.mockReturnValue(of(mockLoginResponse));
+
+      // act
       setValidForm();
-
-      // Mock failed login
-      authService.login.mockReturnValue(throwError(() => new Error('Login failed')));
-
       component.submit();
 
+      // assert
+      expect(router.navigate).toHaveBeenCalledWith(['/sessions']);
+    });
+
+    it('should handle errors on failed login attempt', () => {
+      // arrange
+      const loginRequest = { email: "wrong@studio.com", password: "wrongpassword" };
+      const errorResponse = new Error('Unauthorized');
+      mockAuthService.login.mockReturnValue(throwError(() => errorResponse));
+
+      // act
+      component.form.setValue(loginRequest);
+      ngZone.run(() => {
+        component.submit();
+      });
+
+      // assert
       expect(component.onError).toBe(true);
     });
   });

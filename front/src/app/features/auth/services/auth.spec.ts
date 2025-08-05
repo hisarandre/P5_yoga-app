@@ -51,10 +51,12 @@ describe('AuthService', () => {
   });
 
   it('should call register and return void', () => {
+    // act
     authService.register(mockRegisterRequest).subscribe(response => {
       expect(response).toBeUndefined();
     });
 
+    // assert
     const req = httpMock.expectOne('api/auth/register');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(mockRegisterRequest);

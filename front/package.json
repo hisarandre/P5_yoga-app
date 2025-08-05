@@ -4,14 +4,10 @@
   "scripts": {
     "start": "ng serve",
     "test": "jest",
-    "test:watch": "jest --watch",
-
-
-    "test:unit": "jest --coverage --coverageDirectory=coverage/unit --testMatch='**/*.spec.ts'",
+    "test:unit": "jest --coverage --coverageDirectory=coverage/unit --testMatch='**/*.spec.ts' --testPathIgnorePatterns='\\.integration\\.spec\\.ts$'",
     "test:integration": "jest --coverage --coverageDirectory=coverage/integration --testMatch='**/*.integration.spec.ts'",
-    "coverage:merge": "mkdir -p coverage/merged && cp coverage/unit/coverage-final.json coverage/merged/unit.json && cp coverage/integration/coverage-final.json coverage/merged/integration.json && nyc merge coverage/merged coverage/merged/coverage.json && nyc report --reporter=html --temp-directory=coverage/merged --report-dir=coverage/combined-report",
+    "coverage:merge": "node merge-coverage.cjs && istanbul report --reporter=html --include=coverage/merged/coverage-final.json --dir=coverage/combined-report",
     "test:coverage": "npm run test:unit && npm run test:integration && npm run coverage:merge",
-
     "lint": "ng lint",
     "e2e": "ng e2e",
     "e2e:ci": "ng run yoga:e2e-ci",
@@ -37,8 +33,8 @@
     "zone.js": "0.11.8"
   },
   "devDependencies": {
-    "@angular-builders/jest": "14.0.1",
     "@angular-builders/custom-webpack": "^14.0.1",
+    "@angular-builders/jest": "14.0.1",
     "@angular-devkit/build-angular": "14.2.1",
     "@angular-eslint/builder": "14.0.3",
     "@angular-eslint/eslint-plugin": "14.0.3",
@@ -57,7 +53,9 @@
     "@typescript-eslint/parser": "5.35.1",
     "cypress": "10.4.0",
     "eslint": "8.23.0",
+    "istanbul": "^0.4.5",
     "istanbul-lib-coverage": "3.2.0",
+    "istanbul-merge": "^2.0.0",
     "jest": "28.1.3",
     "jest-html-reporter": "3.6.0",
     "jest-marbles": "3.0.3",
