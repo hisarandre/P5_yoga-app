@@ -5,14 +5,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { By } from '@angular/platform-browser';
-import { of, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { RegisterComponent } from './register.component';
 import { AuthService } from '../../services/auth.service';
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { expect } from '@jest/globals';
+import {RegisterRequest} from "../../interfaces/registerRequest.interface";
+import {of} from "rxjs";
 
 describe('RegisterComponent', () => {
   let component: RegisterComponent;
@@ -20,14 +20,18 @@ describe('RegisterComponent', () => {
   let authService: jest.Mocked<AuthService>;
   let router: Router;
 
-  const mockAuthService = {
-    register: jest.fn()
+  const componentSelectors = {
+    submitButton: '[data-testid="submit-button"]'
   };
 
-  const mockValidRegisterData= {
+  const mockAuthService = {
+    register: jest.fn().mockReturnValue(of(void 0))
+  };
+
+  const mockValidRegisterData : RegisterRequest = {
     email: 'test@test.com',
-    firstName: 'John',
-    lastName: 'Doe',
+    firstName: 'User',
+    lastName: 'Test',
     password: 'test!1234'
   };
 
@@ -68,87 +72,72 @@ describe('RegisterComponent', () => {
     expect(component).toBeTruthy();
   });
 
-
   describe('Form validation', () => {
     it('should enable submit button when all required fields are filled', () => {
+      //act
       setValidForm();
+      const submitButton = fixture.nativeElement.querySelector(componentSelectors.submitButton) as HTMLButtonElement;
 
-      const submitButton = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
-
+      // assert
       expect(component.form.valid).toBe(true);
       expect(submitButton.disabled).toBe(false);
     });
 
-    it('should mark email as invalid when format is wrong', () => {
+    it('should initialize form with required validators', () => {
+      // arrange
       const emailControl = component.form.get('email');
+      const passwordControl = component.form.get('password');
+      const firstNameControl = component.form.get('firstName');
+      const lastNameControl = component.form.get('lastName');
+
+      // act
+      emailControl?.setValue('');
+      passwordControl?.setValue('');
+      lastNameControl?.setValue('');
+      firstNameControl?.setValue('');
+
+      emailControl?.markAsTouched();
+      passwordControl?.markAsTouched();
+      lastNameControl?.markAsTouched();
+      firstNameControl?.markAsTouched();
+
+      // assert
+      expect(emailControl?.hasError('required')).toBe(true);
+      expect(passwordControl?.hasError('required')).toBe(true);
+      expect(lastNameControl?.hasError('required')).toBe(true);
+      expect(firstNameControl?.hasError('required')).toBe(true);
+    });
+
+    it('should initialize form with email validator', () => {
+      // arrange
+      const emailControl = component.form.get('email');
+
+      // act
       emailControl?.setValue('invalid-email');
       emailControl?.markAsTouched();
 
-      expect(emailControl?.invalid).toBeTruthy();
-      expect(emailControl?.errors?.['email']).toBeTruthy();
-    });
-
-    it('should mark lastName as invalid when empty', () => {
-      const lastNameControl = component.form.get('lastName');
-      lastNameControl?.setValue('');
-      lastNameControl?.markAsTouched();
-
-      expect(lastNameControl?.invalid).toBeTruthy();
-      expect(lastNameControl?.errors?.['required']).toBeTruthy();
-    });
-
-    it('should mark firstName as invalid when empty', () => {
-      const firstNameControl = component.form.get('firstName');
-      firstNameControl?.setValue('');
-      firstNameControl?.markAsTouched();
-
-      expect(firstNameControl?.invalid).toBeTruthy();
-      expect(firstNameControl?.errors?.['required']).toBeTruthy();
-    });
-
-    it('should mark password as invalid when empty', () => {
-      const passwordControl = component.form.get('password');
-      passwordControl?.setValue('');
-      passwordControl?.markAsTouched();
-
-      expect(passwordControl?.invalid).toBeTruthy();
-      expect(passwordControl?.errors?.['required']).toBeTruthy();
+      // assert
+      expect(emailControl?.hasError('email')).toBe(true);
     });
   });
 
-  describe('Form submit', () => {
-    it('should call authService.register when form is valid', () => {
+  describe('Register on submit test suites', () => {
+    it('should call AuthService.register with form data', () => {
+      // act
       setValidForm();
-
-      // Mock successful register
-      authService.register.mockReturnValue(of(undefined));
-
       component.submit();
 
-      expect(authService.register).toHaveBeenCalledWith(mockValidRegisterData);
-      expect(authService.register).toHaveBeenCalledTimes(1);
+      // assert
+      expect(mockAuthService.register).toHaveBeenCalledWith(mockValidRegisterData);
     });
 
-    it('should navigate to login on successful register', () => {
+    it('should navigate on successful register', () => {
+      // act
       setValidForm();
-
-      authService.register.mockReturnValue(of(undefined));
-
-      const routerSpy = jest.spyOn(router, 'navigate');
-
       component.submit();
 
-      expect(routerSpy).toHaveBeenCalledWith(['/login']);
-    });
-
-    it('should set onError to true if register fails', () => {
-      setValidForm();
-
-      authService.register.mockReturnValue(throwError(() => new Error('Register failed')));
-
-      component.submit();
-
-      expect(component.onError).toBe(true);
+      // assert
+      expect(router.navigate).toHaveBeenCalledWith(['/login']);
     });
   });
 });

@@ -9,24 +9,24 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { By } from '@angular/platform-browser';
 import { expect } from '@jest/globals';
 import { Component, NgZone } from '@angular/core';
-
-import { LoginComponent } from './login.component';
 import { AuthService } from '../../services/auth.service';
 import { SessionService } from 'src/app/services/session.service';
 import { SessionInformation } from '../../../../interfaces/sessionInformation.interface';
 import {throwError} from "rxjs";
 import {LoginRequest} from "../../interfaces/loginRequest.interface";
+import {RegisterComponent} from "./register.component";
+import {RegisterRequest} from "../../interfaces/registerRequest.interface";
+import {LoginComponent} from "../login/login.component";
 
 // Mock component for routing
 @Component({ template: '' })
-class MockSessionsComponent { }
+class MockLoginComponent { }
 
-describe('LoginComponent Integration Test suites', () => {
-  let component: LoginComponent;
-  let fixture: ComponentFixture<LoginComponent>;
+describe('RegisterComponent Integration Test suites', () => {
+  let component: RegisterComponent;
+  let fixture: ComponentFixture<RegisterComponent>;
   let httpMock: HttpTestingController;
   let router: Router;
   let location: Location;
@@ -36,25 +36,24 @@ describe('LoginComponent Integration Test suites', () => {
     submitButton: '[data-testid="submit-button"]'
   };
 
-  const mockLoginRequest : LoginRequest = {
+  const mockValidRegisterData : RegisterRequest = {
     email: 'test@test.com',
+    firstName: 'User',
+    lastName: 'Test',
     password: 'test!1234'
   };
 
-  const mockSessionInformation: SessionInformation = {
-    token: 'abc123',
-    type: 'Bearer',
-    id: 1,
-    username: 'test@test.com',
-    firstName: 'Test',
-    lastName: 'User',
-    admin: false
+  const setValidForm = () => {
+    component.form.setValue(mockValidRegisterData);
+    fixture.detectChanges();
   };
 
-  const setFormValues = (email: string, password: string) => {
+  const setFormValues = (email: string, password: string, firstName: string, lastName: string) => {
     component.form.patchValue({
       email: email,
-      password: password
+      password: password,
+      firstName: firstName,
+      lastName: lastName
     });
     fixture.detectChanges();
   };
@@ -67,7 +66,7 @@ describe('LoginComponent Integration Test suites', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [LoginComponent, MockSessionsComponent],
+      declarations: [RegisterComponent, MockLoginComponent],
       providers: [
         AuthService,
         SessionService
@@ -75,7 +74,7 @@ describe('LoginComponent Integration Test suites', () => {
       imports: [
         HttpClientTestingModule,
         RouterTestingModule.withRoutes([
-          { path: 'sessions', component: MockSessionsComponent }
+          { path: 'login', component: MockLoginComponent }
         ]),
         BrowserAnimationsModule,
         MatCardModule,
@@ -86,12 +85,11 @@ describe('LoginComponent Integration Test suites', () => {
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(LoginComponent);
+    fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
     location = TestBed.inject(Location);
-    sessionService = TestBed.inject(SessionService);
 
     fixture.detectChanges();
   });
@@ -100,40 +98,22 @@ describe('LoginComponent Integration Test suites', () => {
     httpMock.verify();
   });
 
-  it('should log the user and redirect when submit a valid form', fakeAsync(() => {
+  it('should register the user and redirect on the login page when submit a valid form', fakeAsync(() => {
     // arrange
-    setFormValues(mockLoginRequest.email, mockLoginRequest.password);
+    setValidForm()
 
     // act
     clickSubmitButton();
 
     // Simulate backend response
-    const req = httpMock.expectOne('api/auth/login');
-    req.flush(mockSessionInformation);
+    const req = httpMock.expectOne('api/auth/register');
+    req.flush({message:"User registered successfully!"}, { status: 200, statusText: 'OK' });
     tick();
 
     // assert
     // Verify form, session, navigation
     expect(component.onError).toBe(false);
     expect(component.form.valid).toBe(true);
-    expect(sessionService.isLogged).toBe(true);
-    expect(sessionService.sessionInformation).toEqual(mockSessionInformation);
-    expect(location.path()).toBe('/sessions');
-  }));
-
-  it('should show error message when login fails', fakeAsync(() => {
-    // arrange
-    setFormValues(mockLoginRequest.email, 'wrongpassword');
-
-    // act
-    clickSubmitButton();
-    const req = httpMock.expectOne('api/auth/login');
-    req.flush({}, { status: 400, statusText: 'Bad Request' });
-    tick();
-
-    // assert
-    expect(component.onError).toBe(true);
-    expect(sessionService.isLogged).toBe(false);
-    expect(location.path()).toBe('');
+    expect(location.path()).toBe('/login');
   }));
 });
