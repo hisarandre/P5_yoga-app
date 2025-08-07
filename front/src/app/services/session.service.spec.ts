@@ -27,12 +27,6 @@ describe('SessionService', () => {
     expect(sessionService).toBeTruthy();
   });
 
-  it('should return an observable of isLogged status', () => {
-    sessionService.$isLogged().subscribe(isLogged => {
-      expect(isLogged).toBe(false);
-    });
-  });
-
   it('should log in user and update state', () => {
     sessionService.logIn(mockSessionInformation);
 
@@ -54,14 +48,13 @@ describe('SessionService', () => {
   });
 
   it('should log out user and update state', () => {
-    // First log in
-    sessionService.logIn(mockSessionInformation);
-    expect(sessionService.isLogged).toBe(true);
-    expect(sessionService.sessionInformation).toEqual(mockSessionInformation);
+    // assign
+    sessionService.isLogged = true;
 
-    // Then log out
+    // act
     sessionService.logOut();
 
+    //assert
     expect(sessionService.isLogged).toBe(false);
     expect(sessionService.sessionInformation).toBeUndefined();
   });

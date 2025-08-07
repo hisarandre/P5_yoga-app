@@ -72,7 +72,7 @@ describe('RegisterComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('Form validation', () => {
+  describe('Form validation test suites', () => {
     it('should enable submit button when all required fields are filled', () => {
       //act
       setValidForm();

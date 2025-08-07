@@ -10,15 +10,11 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { expect } from '@jest/globals';
-import { Component, NgZone } from '@angular/core';
+import { Component } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { SessionService } from 'src/app/services/session.service';
-import { SessionInformation } from '../../../../interfaces/sessionInformation.interface';
-import {throwError} from "rxjs";
-import {LoginRequest} from "../../interfaces/loginRequest.interface";
 import {RegisterComponent} from "./register.component";
 import {RegisterRequest} from "../../interfaces/registerRequest.interface";
-import {LoginComponent} from "../login/login.component";
 
 // Mock component for routing
 @Component({ template: '' })
@@ -45,16 +41,6 @@ describe('RegisterComponent Integration Test suites', () => {
 
   const setValidForm = () => {
     component.form.setValue(mockValidRegisterData);
-    fixture.detectChanges();
-  };
-
-  const setFormValues = (email: string, password: string, firstName: string, lastName: string) => {
-    component.form.patchValue({
-      email: email,
-      password: password,
-      firstName: firstName,
-      lastName: lastName
-    });
     fixture.detectChanges();
   };
 

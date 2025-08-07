@@ -9,7 +9,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { By } from '@angular/platform-browser';
 import { expect } from '@jest/globals';
 import { Component, NgZone } from '@angular/core';
 

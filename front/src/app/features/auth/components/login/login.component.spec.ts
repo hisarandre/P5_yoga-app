@@ -1,6 +1,5 @@
 import { HttpClientModule } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgZone } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -20,7 +19,6 @@ describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let router: Router;
-  let ngZone: NgZone;
 
   const componentSelectors = {
     submitButton: '[data-testid="submit-button"]'
@@ -83,7 +81,6 @@ describe('LoginComponent', () => {
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
-    ngZone = TestBed.inject(NgZone);
     jest.spyOn(router, 'navigate').mockResolvedValue(true);
     jest.clearAllMocks();
   });
@@ -190,9 +187,7 @@ describe('LoginComponent', () => {
 
       // act
       component.form.setValue(loginRequest);
-      ngZone.run(() => {
-        component.submit();
-      });
+      component.submit();
 
       // assert
       expect(component.onError).toBe(true);

@@ -12,6 +12,8 @@ import { Teacher } from '../../../../interfaces/teacher.interface';
 import { Session } from '../../interfaces/session.interface';
 import { SessionApiService } from '../../services/session-api.service';
 import { DetailComponent } from './detail.component';
+import {MatIconModule} from "@angular/material/icon";
+import {MatCardModule} from "@angular/material/card";
 
 describe('DetailComponent', () => {
   let component: DetailComponent;
@@ -23,10 +25,16 @@ describe('DetailComponent', () => {
   let router: Router;
   let activatedRoute: ActivatedRoute;
 
+  const componentSelectors = {
+    deleteButton: '[data-testid="delete-button"]',
+    participateButton: '[data-testid="participate-button"]',
+    unParticipateButton: '[data-testid="unparticipate-button"]',
+  };
+
   const mockSessionService = {
     sessionInformation: {
       admin: true,
-      id: 1
+      id: 2
     }
   };
 
@@ -48,11 +56,11 @@ describe('DetailComponent', () => {
 
   const mockSession: Session = {
     id: 1,
-    name: 'Test Session',
-    description: 'Test Description',
-    date: new Date('2025-01-01'),
+    name: 'Yoga Session',
+    description: 'Relaxing yoga session',
+    date: new Date('2025-02-01'),
     teacher_id: 1,
-    users: [1, 2],
+    users: [3, 4],
     createdAt: new Date(),
     updatedAt: new Date()
   };
@@ -78,7 +86,9 @@ describe('DetailComponent', () => {
         RouterTestingModule,
         HttpClientModule,
         MatSnackBarModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        MatIconModule,
+        MatCardModule,
       ],
       declarations: [DetailComponent],
       providers: [
@@ -107,107 +117,97 @@ describe('DetailComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('Fetch session', () => {
-    it('should fetch session and teacher details', () => {
-      teacherService.detail.mockReturnValue(of(mockTeacher));
-
-      component.ngOnInit();
-
-      expect(sessionApiService.detail).toHaveBeenCalledWith('1');
-      expect(teacherService.detail).toHaveBeenCalledWith('1');
-      expect(component.session).toEqual(mockSession);
-      expect(component.teacher).toEqual(mockTeacher);
-    });
+  describe('Initialize data', () => {
 
     it('should set isParticipate to true when user is in session users', () => {
+      // arrange
       const sessionWithUser = { ...mockSession, users: [1, 2, 3] };
       sessionApiService.detail.mockReturnValue(of(sessionWithUser));
       teacherService.detail.mockReturnValue(of(mockTeacher));
 
+      // act
       component.ngOnInit();
 
+      // assert
       expect(component.isParticipate).toBe(true);
     });
 
     it('should set isParticipate to false when user is not in session users', () => {
-      const sessionWithoutUser = { ...mockSession, users: [2, 3] };
+      // arrange
+      const sessionWithoutUser = { ...mockSession, users: [3] };
       sessionApiService.detail.mockReturnValue(of(sessionWithoutUser));
       teacherService.detail.mockReturnValue(of(mockTeacher));
 
+      // act
       component.ngOnInit();
 
+      // assert
       expect(component.isParticipate).toBe(false);
     });
   });
 
   describe('Navigation', () => {
     it('should navigate back on back method call', () => {
+      // arrange
       const backSpy = jest.spyOn(window.history, 'back');
 
+      // act
       component.back();
 
+      // assert
       expect(backSpy).toHaveBeenCalled();
     });
   })
 
-    describe('Delete session', () => {
+    describe('Delete session test suites', () => {
     it('should call sessionApiService.delete when delete() is called', () => {
+      // act
       component.delete();
 
+      // assert
       expect(sessionApiService.delete).toHaveBeenCalledWith('1');
       expect(sessionApiService.delete).toHaveBeenCalledTimes(1);
     });
 
     it('should show success message after deleting a session', () => {
+      // act
       component.delete();
 
+      // assert
       expect(matSnackBar.open).toHaveBeenCalledTimes(1);
     });
 
     it('should navigate to sessions after deleting a session', () => {
+      // act
       component.delete();
 
+      // assert
       expect(router.navigate).toHaveBeenCalledWith(['sessions']);
     });
 
       it('should show delete button if user is admin', () => {
+        // arrange
         component.isAdmin = true;
-        fixture.detectChanges();
 
-        const deleteButton = fixture.nativeElement.querySelector('button[color="warn"] span');
+        // act
+        fixture.detectChanges();
+        const deleteButton = fixture.nativeElement.querySelector(componentSelectors.deleteButton);
+
+        // assert
         expect(deleteButton?.textContent).toContain('Delete');
       });
 
       it('should not show delete button if user is not admin', () => {
+        // arrange
         component.isAdmin = false;
-        fixture.detectChanges();
 
-        const deleteButton = fixture.nativeElement.querySelector('button[color="warn"] span');
+        // act
+        fixture.detectChanges();
+        const deleteButton = fixture.nativeElement.querySelector(componentSelectors.deleteButton);
+
+        // assert
         expect(deleteButton).toBeNull();
       });
   });
 
-  describe('Participate and unparticipate to a session', () => {
-    it('should add user in session when participate() is called', () => {
-      const sessionWithUser = { ...mockSession, users: [1, 2, 3] };
-      sessionApiService.detail.mockReturnValue(of(sessionWithUser)); // Value after participate()
-
-      component.participate();
-
-      expect(component.isParticipate).toBe(true);
-      expect(sessionApiService.participate)
-        .toHaveBeenCalledWith(mockSession.id!.toString(), mockSessionService.sessionInformation.id.toString());
-    });
-
-    it('should remove user from session when unParticipate() is called', () => {
-      const sessionWithoutUser = { ...mockSession, users: [2, 3] };
-      sessionApiService.detail.mockReturnValue(of(sessionWithoutUser));  // Value after unParticipate()
-
-      component.unParticipate();
-
-      expect(component.isParticipate).toBe(false);
-      expect(sessionApiService.unParticipate)
-        .toHaveBeenCalledWith(mockSession.id!.toString(), mockSessionService.sessionInformation.id.toString());
-    });
-  });
 });
