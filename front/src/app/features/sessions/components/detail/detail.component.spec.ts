@@ -1,25 +1,84 @@
 import { HttpClientModule } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { RouterTestingModule, } from '@angular/router/testing';
-import { expect } from '@jest/globals'; 
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ActivatedRoute, Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { expect } from '@jest/globals';
+import { of } from 'rxjs';
 import { SessionService } from '../../../../services/session.service';
-
+import { TeacherService } from '../../../../services/teacher.service';
+import { Teacher } from '../../../../interfaces/teacher.interface';
+import { Session } from '../../interfaces/session.interface';
+import { SessionApiService } from '../../services/session-api.service';
 import { DetailComponent } from './detail.component';
-
+import {MatIconModule} from "@angular/material/icon";
+import {MatCardModule} from "@angular/material/card";
 
 describe('DetailComponent', () => {
   let component: DetailComponent;
-  let fixture: ComponentFixture<DetailComponent>; 
-  let service: SessionService;
+  let fixture: ComponentFixture<DetailComponent>;
+  let sessionService: SessionService;
+  let sessionApiService: jest.Mocked<SessionApiService>;
+  let teacherService: jest.Mocked<TeacherService>;
+  let matSnackBar: jest.Mocked<MatSnackBar>;
+  let router: Router;
+  let activatedRoute: ActivatedRoute;
+
+  const componentSelectors = {
+    deleteButton: '[data-testid="delete-button"]',
+    participateButton: '[data-testid="participate-button"]',
+    unParticipateButton: '[data-testid="unparticipate-button"]',
+  };
 
   const mockSessionService = {
     sessionInformation: {
       admin: true,
-      id: 1
+      id: 2
     }
-  }
+  };
+
+  const mockTeacherService = {
+    detail: jest.fn()
+  };
+
+  const mockMatSnackBar = {
+    open: jest.fn()
+  };
+
+  const mockActivatedRoute = {
+    snapshot: {
+      paramMap: {
+        get: jest.fn().mockReturnValue('1')
+      }
+    }
+  };
+
+  const mockSession: Session = {
+    id: 1,
+    name: 'Yoga Session',
+    description: 'Relaxing yoga session',
+    date: new Date('2025-02-01'),
+    teacher_id: 1,
+    users: [3, 4],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+
+  const mockSessionApiService = {
+    detail: jest.fn().mockReturnValue(of(mockSession)),
+    delete: jest.fn().mockReturnValue(of(null)),
+    participate: jest.fn().mockReturnValue(of(null)),
+    unParticipate: jest.fn().mockReturnValue(of(null))
+  };
+
+  const mockTeacher: Teacher = {
+    id: 1,
+    lastName: 'Test',
+    firstName: 'Teacher',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -27,20 +86,128 @@ describe('DetailComponent', () => {
         RouterTestingModule,
         HttpClientModule,
         MatSnackBarModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        MatIconModule,
+        MatCardModule,
       ],
-      declarations: [DetailComponent], 
-      providers: [{ provide: SessionService, useValue: mockSessionService }],
-    })
-      .compileComponents();
-      service = TestBed.inject(SessionService);
+      declarations: [DetailComponent],
+      providers: [
+        { provide: SessionService, useValue: mockSessionService },
+        { provide: SessionApiService, useValue: mockSessionApiService },
+        { provide: TeacherService, useValue: mockTeacherService },
+        { provide: MatSnackBar, useValue: mockMatSnackBar },
+        { provide: ActivatedRoute, useValue: mockActivatedRoute }
+      ],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(DetailComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
+    sessionService = TestBed.inject(SessionService);
+    sessionApiService = TestBed.inject(SessionApiService) as jest.Mocked<SessionApiService>;
+    teacherService = TestBed.inject(TeacherService) as jest.Mocked<TeacherService>;
+    matSnackBar = TestBed.inject(MatSnackBar) as jest.Mocked<MatSnackBar>;
+    router = TestBed.inject(Router);
+    activatedRoute = TestBed.inject(ActivatedRoute);
+
+    jest.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+    jest.clearAllMocks();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
-});
 
+  describe('Initialize data', () => {
+
+    it('should set isParticipate to true when user is in session users', () => {
+      // arrange
+      const sessionWithUser = { ...mockSession, users: [1, 2, 3] };
+      sessionApiService.detail.mockReturnValue(of(sessionWithUser));
+      teacherService.detail.mockReturnValue(of(mockTeacher));
+
+      // act
+      component.ngOnInit();
+
+      // assert
+      expect(component.isParticipate).toBe(true);
+    });
+
+    it('should set isParticipate to false when user is not in session users', () => {
+      // arrange
+      const sessionWithoutUser = { ...mockSession, users: [3] };
+      sessionApiService.detail.mockReturnValue(of(sessionWithoutUser));
+      teacherService.detail.mockReturnValue(of(mockTeacher));
+
+      // act
+      component.ngOnInit();
+
+      // assert
+      expect(component.isParticipate).toBe(false);
+    });
+  });
+
+  describe('Navigation', () => {
+    it('should navigate back on back method call', () => {
+      // arrange
+      const backSpy = jest.spyOn(window.history, 'back');
+
+      // act
+      component.back();
+
+      // assert
+      expect(backSpy).toHaveBeenCalled();
+    });
+  })
+
+    describe('Delete session test suites', () => {
+    it('should call sessionApiService.delete when delete() is called', () => {
+      // act
+      component.delete();
+
+      // assert
+      expect(sessionApiService.delete).toHaveBeenCalledWith('1');
+      expect(sessionApiService.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it('should show success message after deleting a session', () => {
+      // act
+      component.delete();
+
+      // assert
+      expect(matSnackBar.open).toHaveBeenCalledTimes(1);
+    });
+
+    it('should navigate to sessions after deleting a session', () => {
+      // act
+      component.delete();
+
+      // assert
+      expect(router.navigate).toHaveBeenCalledWith(['sessions']);
+    });
+
+      it('should show delete button if user is admin', () => {
+        // arrange
+        component.isAdmin = true;
+
+        // act
+        fixture.detectChanges();
+        const deleteButton = fixture.nativeElement.querySelector(componentSelectors.deleteButton);
+
+        // assert
+        expect(deleteButton?.textContent).toContain('Delete');
+      });
+
+      it('should not show delete button if user is not admin', () => {
+        // arrange
+        component.isAdmin = false;
+
+        // act
+        fixture.detectChanges();
+        const deleteButton = fixture.nativeElement.querySelector(componentSelectors.deleteButton);
+
+        // assert
+        expect(deleteButton).toBeNull();
+      });
+  });
+
+});

@@ -1,5 +1,5 @@
 import { HttpClientModule } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,46 +8,54 @@ import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
-import { By } from '@angular/platform-browser';
 import { expect } from '@jest/globals';
-import { of, throwError } from 'rxjs';
+import {BehaviorSubject, of, throwError} from 'rxjs';
 import { SessionService } from 'src/app/services/session.service';
 import { LoginComponent } from './login.component';
 import { AuthService } from "../../services/auth.service";
-
-const mockAuthService = {
-  login: jest.fn()
-};
+import {SessionInformation} from "../../../../interfaces/sessionInformation.interface";
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let router: Router;
-  let authService: jest.Mocked<AuthService>;
 
-  const VALID_LOGIN_DATA = {
-    email: 'test@test.com',
-    password: 'test!1234'
+  const componentSelectors = {
+    submitButton: '[data-testid="submit-button"]'
   };
 
-  const MOCK_LOGIN_RESPONSE = {
+  const mockLoginResponse: SessionInformation = {
     token: 'abc',
     type: "Bearer",
     id: 1,
     username: "test@test.com",
     firstName: "Test",
-    lastName: "Test",
+    lastName: "User",
     admin: true
   };
 
-  // Helper functions
+  const mockValidLoginData = {
+    email: 'test@test.com',
+    password: 'test!1234'
+  };
+
+  const mockSessionService = {
+    sessionInformation: mockLoginResponse,
+    logIn: jest.fn(),
+    isLoggedSubject: new BehaviorSubject<boolean>(false),
+  };
+
+  const mockAuthService = {
+    login: jest.fn().mockReturnValue(of(mockLoginResponse))
+  };
+
   const setFormValues = (email: string = '', password: string = '') => {
     component.form.patchValue({ email, password });
     fixture.detectChanges();
   };
 
   const setValidForm = () => {
-    component.form.setValue(VALID_LOGIN_DATA);
+    component.form.setValue(mockValidLoginData);
     fixture.detectChanges();
   };
 
@@ -55,7 +63,7 @@ describe('LoginComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [LoginComponent],
       providers: [
-        SessionService,
+        { provide: SessionService, useValue: mockSessionService },
         { provide: AuthService, useValue: mockAuthService }
       ],
       imports: [
@@ -73,15 +81,7 @@ describe('LoginComponent', () => {
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
-    authService = TestBed.inject(AuthService) as jest.Mocked<AuthService>;
-
-    jest.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-
-    fixture.detectChanges();
-  });
-
-  beforeEach(() => {
-    // Reset all mocks before each test
+    jest.spyOn(router, 'navigate').mockResolvedValue(true);
     jest.clearAllMocks();
   });
 
@@ -89,91 +89,107 @@ describe('LoginComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('Form Validation', () => {
-    it('should init form with empty inputs', () => {
-      expect(component.form.get('email')?.value).toBe('');
-      expect(component.form.get('password')?.value).toBe('');
-    });
-
-    it('should mark form as invalid when inputs are empty', () => {
-      expect(component.form.valid).toBeFalsy();
-    });
+  describe('Form Validation test suites', () => {
 
     it('should mark email as invalid when format is wrong', () => {
+      // arrange
       const emailControl = component.form.get('email');
+
+      // act
       emailControl?.setValue('invalid-email');
       emailControl?.markAsTouched();
 
+      // assert
       expect(emailControl?.invalid).toBeTruthy();
       expect(emailControl?.errors?.['email']).toBeTruthy();
     });
 
     it('should mark form as valid when all inputs are correct', () => {
+      // act
       setValidForm();
+
+      // assert
       expect(component.form.valid).toBeTruthy();
     });
 
     it('should require email', () => {
+      // arrange
       const emailControl = component.form.get('email');
+
+      // act
       emailControl?.setValue('');
       emailControl?.markAsTouched();
 
+      // assert
       expect(emailControl?.errors?.['required']).toBeTruthy();
     });
 
     it('should require password', () => {
+      // arrange
       const passwordControl = component.form.get('password');
+
+      // act
       passwordControl?.setValue('');
       passwordControl?.markAsTouched();
 
+      // assert
       expect(passwordControl?.errors?.['required']).toBeTruthy();
     });
 
     it('should disable submit button when form is invalid', () => {
-      setFormValues('', VALID_LOGIN_DATA.password);
+      // act
+      setFormValues('', mockValidLoginData.password);
 
-      const submitButton = fixture.debugElement.query(By.css('button[type="submit"]'));
-      expect(submitButton.nativeElement.disabled).toBeTruthy();
+      // assert
+      const submitButton = fixture.nativeElement.querySelector(componentSelectors.submitButton) as HTMLButtonElement;
+      expect(submitButton.disabled).toBeTruthy();
     });
   });
 
-  describe('Form submit', () => {
-    it('should call authService.login with form value when form is valid', () => {
+  describe('Login on submit test suites', () => {
+    it('should call AuthService.login with form data', () => {
+      // act
       setValidForm();
-
-      // Mock successful login
-      authService.login.mockReturnValue(of(MOCK_LOGIN_RESPONSE));
-
       component.submit();
 
-      expect(authService.login).toHaveBeenCalledWith(VALID_LOGIN_DATA);
-      expect(authService.login).toHaveBeenCalledTimes(1);
+      // assert
+      expect(mockAuthService.login).toHaveBeenCalledWith(mockValidLoginData);
     });
 
-    it('should update session and navigate on successful login', () => {
+    it('should call SessionService.logIn on successful auth', () => {
+      mockAuthService.login.mockReturnValue(of(mockLoginResponse));
+      // act
       setValidForm();
-
-      // Mock successful login
-      authService.login.mockReturnValue(of(MOCK_LOGIN_RESPONSE));
-
-      const sessionSpy = jest.spyOn(component['sessionService'], 'logIn');
-      const routerSpy = jest.spyOn(component['router'], 'navigate');
-
       component.submit();
 
-      expect(sessionSpy).toHaveBeenCalledWith(MOCK_LOGIN_RESPONSE);
-      expect(sessionSpy).toHaveBeenCalledTimes(1);
-      expect(routerSpy).toHaveBeenCalledWith(['/sessions']);
+      // assert
+      expect(mockSessionService.logIn).toHaveBeenCalledWith(mockLoginResponse);
     });
 
-    it('should set onError to true if login fails', () => {
+    it('should navigate on successful login', () => {
+      // arrange
+      mockAuthService.login.mockReturnValue(of(mockLoginResponse));
+      mockSessionService.logIn.mockReturnValue(of(mockLoginResponse));
+
+      // act
       setValidForm();
-
-      // Mock failed login
-      authService.login.mockReturnValue(throwError(() => new Error('Login failed')));
-
       component.submit();
 
+      // assert
+      expect(router.navigate).toHaveBeenCalledWith(['/sessions']);
+    });
+
+    it('should handle errors on failed login attempt', () => {
+      // arrange
+      const loginRequest = { email: "wrong@studio.com", password: "wrongpassword" };
+      const errorResponse = new Error('Unauthorized');
+      mockAuthService.login.mockReturnValue(throwError(() => errorResponse));
+
+      // act
+      component.form.setValue(loginRequest);
+      component.submit();
+
+      // assert
       expect(component.onError).toBe(true);
     });
   });
