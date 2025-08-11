@@ -1,0 +1,24 @@
+[
+  {
+    "id": 1,
+    "name": "Morning Yoga",
+    "date": "2024-01-15",
+    "teacher_id": 1,
+    "description": "A relaxing morning yoga session",
+    "users": [],
+    "createdAt": "2025-08-01T16:57:02",
+    "updatedAt": "2025-08-08T15:08:24"
+  },
+  {
+    "id": 2,
+    "name": "Evening Flow",
+    "date": "2024-01-16",
+    "teacher_id": 2,
+    "description": "Dynamic evening yoga flow",
+    "users": [],
+    "createdAt": "2025-08-01T16:57:02",
+    "updatedAt": "2025-08-08T15:08:24"
+  }
+]
+
+

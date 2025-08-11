@@ -1,43 +1,58 @@
-// ***********************************************
-// This example namespace declaration will help
-// with Intellisense and code completion in your
-// IDE or Text Editor.
-// ***********************************************
-// declare namespace Cypress {
-//   interface Chainable<Subject = any> {
-//     customCommand(param: any): typeof customCommand;
-//   }
-// }
-//
-// function customCommand(param: any): void {
-//   console.warn(param);
-// }
-//
-// NOTE: You can use it like so:
-// Cypress.Commands.add('customCommand', customCommand);
-//
-// ***********************************************
-// This example commands.js shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add("login", (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add("drag", { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add("dismiss", { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
+
+// Constants
+const urls = {
+  loginUrl: '/login',
+  sessionUrl: '/sessions',
+  loginApi: '/api/auth/login',
+  sessionApi: '/api/session',
+};
+
+const selectors = {
+  emailInput: '[data-testid="email-input"]',
+  passwordInput: '[data-testid="password-input"]',
+  submitButton: '[data-testid="submit-button"]',
+  errorMessage: '[data-testid="error-message"]',
+};
+
+const data = {
+  validUser: {
+    email: 'yoga@studio.com',
+    password: 'test!1234',
+  },
+};
+
+// Helper functions
+const submitLoginForm = (email, password) => {
+  cy.get(selectors.emailInput).clear().type(email);
+  cy.get(selectors.passwordInput).clear().type(password);
+  cy.get(selectors.submitButton).click();
+};
+
+const login = (fixtureName, alias) => {
+  cy.visit(urls.loginUrl);
+
+  cy.fixture(fixtureName).then((response) => {
+    cy.fixture('sessions').as('sessions');
+
+    cy.get('@sessions').then((sessions) => {
+      cy.intercept('GET', urls.sessionApi, sessions).as('getSessions');
+    });
+    cy.intercept('POST', urls.loginApi, response).as(alias);
+
+    submitLoginForm(data.validUser.email, data.validUser.password);
+
+    cy.wait(`@${alias}`);
+    cy.wait('@getSessions');
+  });
+
+  cy.url().should('include', urls.sessionUrl);
+};
+
+// Commands
+Cypress.Commands.add('adminLogin', () => {
+  login('adminLoginResponse', 'adminLogin');
+});
+
+Cypress.Commands.add('userLogin', () => {
+  login('userLoginResponse', 'userLogin');
+});
