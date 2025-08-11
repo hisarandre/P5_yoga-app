@@ -12,12 +12,12 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Component } from '@angular/core';
-import { of } from 'rxjs';
 import { SessionService } from '../../../../services/session.service';
 import { SessionApiService } from '../../services/session-api.service';
 import { TeacherService } from '../../../../services/teacher.service';
 import { MatIconModule } from '@angular/material/icon';
 import { expect } from '@jest/globals';
+import { SessionInformation } from '../../../../interfaces/sessionInformation.interface';
 
 @Component({ template: '' })
 class MockSessionsComponent {}
@@ -29,30 +29,36 @@ describe('FormComponent Integration', () => {
   let router: Router;
   let location: Location;
   let snackBar: MatSnackBar;
+  let sessionService: SessionService;
 
-  const componentSelectors = {
-    submitButton: '[data-testid="submit-button"]'
+  const sessionInformation: SessionInformation = {
+    token: 'abc',
+    type: 'Bearer',
+    id: 1,
+    username: 'test@test.com',
+    firstName: 'Test',
+    lastName: 'User',
+    admin: true,
   };
 
   const validFormData = {
     name: 'New Session',
     description: 'New Description',
     date: '2025-01-01',
-    teacher_id: 2
+    teacher_id: 2,
   };
 
-  const mockSessionService = {
-    sessionInformation: {
-      admin: true
-    }
-  };
-
-  const mockTeacherService = {
-    all: () => of([])
+  const updatedFormData = {
+    name: 'Updated Name',
+    description: 'Updated Description',
+    date: '2025-01-01',
+    teacher_id: 2,
   };
 
   const clickOnSubmitButton = () => {
-    const submitButton = fixture.nativeElement.querySelector(componentSelectors.submitButton) as HTMLButtonElement;
+    const submitButton = fixture.nativeElement.querySelector(
+      '[data-testid="submit-button"]'
+    ) as HTMLButtonElement;
     submitButton?.click();
     fixture.detectChanges();
   };
@@ -61,9 +67,7 @@ describe('FormComponent Integration', () => {
     TestBed.configureTestingModule({
       declarations: [FormComponent, MockSessionsComponent],
       imports: [
-        RouterTestingModule.withRoutes([
-          { path: 'sessions', component: MockSessionsComponent }
-        ]),
+        RouterTestingModule.withRoutes([{ path: 'sessions', component: MockSessionsComponent }]),
         HttpClientTestingModule,
         ReactiveFormsModule,
         MatSnackBarModule,
@@ -74,11 +78,7 @@ describe('FormComponent Integration', () => {
         NoopAnimationsModule,
         MatIconModule,
       ],
-      providers: [
-        { provide: SessionService, useValue: mockSessionService },
-        { provide: TeacherService, useValue: mockTeacherService },
-        SessionApiService
-      ]
+      providers: [SessionService, SessionApiService, TeacherService],
     }).compileComponents();
 
     fixture = TestBed.createComponent(FormComponent);
@@ -87,20 +87,26 @@ describe('FormComponent Integration', () => {
     location = TestBed.inject(Location);
     httpMock = TestBed.inject(HttpTestingController);
     snackBar = TestBed.inject(MatSnackBar);
+    sessionService = TestBed.inject(SessionService);
+
+    sessionService.sessionInformation = sessionInformation;
 
     fixture.detectChanges();
+
+    const teachersReq = httpMock.expectOne('api/teacher');
+    teachersReq.flush([]);
   });
 
   afterEach(() => {
     httpMock.verify();
   });
 
-  it('should create a new session, show snackbar and navigate to /sessions', fakeAsync(() => {
+  it('should create a new session, show snackbar, and navigate to /sessions', fakeAsync(() => {
     // arrange
+    component.onUpdate = false;
     component.sessionForm!.setValue(validFormData);
     fixture.detectChanges();
 
-    // Spy snackbar open
     const snackBarSpy = jest.spyOn(snackBar, 'open');
 
     // act
@@ -112,7 +118,7 @@ describe('FormComponent Integration', () => {
     req.flush({ message: 'Session created successfully!' });
 
     tick();
-    tick(3000); // time of the snackbar
+    tick(3000); // snackbar duration
     fixture.detectChanges();
 
     // assert
@@ -120,7 +126,7 @@ describe('FormComponent Integration', () => {
     expect(location.path()).toBe('/sessions');
   }));
 
-  it('should update existing session, show snackbar and navigate to /sessions', fakeAsync(() => {
+  it('should update existing session, show snackbar, and navigate to /sessions', fakeAsync(() => {
     // arrange
     const sessionId = '1';
     const updatedData = {
@@ -143,7 +149,7 @@ describe('FormComponent Integration', () => {
     const req = httpMock.expectOne(`api/session/${sessionId}`);
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual(updatedData);
-    req.flush({ message: 'Session updated!' });
+    req.flush({ message: 'Session updated!' }, { status: 200, statusText: 'OK' });
 
     tick();
     tick(3000);

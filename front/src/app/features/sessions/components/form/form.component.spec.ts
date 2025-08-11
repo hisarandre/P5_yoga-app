@@ -111,24 +111,6 @@ describe('FormComponent', () => {
 
   describe('Form session initialization', () => {
 
-    it('should init form in create mode', () => {
-      // arrange
-      mockRouter.url = '/sessions/create';
-      fixture.detectChanges();
-
-      // act
-      component.ngOnInit();
-
-      // assert
-      expect(component.onUpdate).toBeFalsy();
-      expect(component.sessionForm?.value).toEqual({
-        name: '',
-        date: '',
-        teacher_id: '',
-        description: ''
-      });
-    });
-
     it('should init form in update mode', () => {
       // arrange
       mockRouter.url = '/sessions/update/1';

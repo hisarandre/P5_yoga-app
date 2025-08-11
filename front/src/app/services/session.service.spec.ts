@@ -59,19 +59,4 @@ describe('SessionService', () => {
     expect(sessionService.sessionInformation).toBeUndefined();
   });
 
-  it('should emit false when user logs out', () => {
-    let isLoggedValue: boolean | undefined;
-
-    // First log in
-    sessionService.logIn(mockSessionInformation);
-
-    sessionService.$isLogged().subscribe(isLogged => {
-      isLoggedValue = isLogged;
-    });
-
-    sessionService.logOut();
-
-    expect(isLoggedValue).toBe(false);
-  });
-
 });

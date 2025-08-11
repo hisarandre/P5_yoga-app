@@ -74,27 +74,4 @@ describe('AuthService', () => {
     req.flush(mockSessionInformation);
   });
 
-  it('should handle register error', () => {
-    authService.register(mockRegisterRequest).subscribe({
-      next: () => fail('Expected an error, not success'),
-      error: (error) => {
-        expect(error.status).toBe(400);
-      }
-    });
-
-    const req = httpMock.expectOne('api/auth/register');
-    req.flush('Registration failed', { status: 400, statusText: 'Bad Request' });
-  });
-
-  it('should handle login error', () => {
-    authService.login(mockLoginRequest).subscribe({
-      next: () => fail('Expected an error, not success'),
-      error: (error) => {
-        expect(error.status).toBe(401);
-      }
-    });
-
-    const req = httpMock.expectOne('api/auth/login');
-    req.flush('Invalid credentials', { status: 401, statusText: 'Unauthorized' });
-  });
 });

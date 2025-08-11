@@ -24,7 +24,11 @@
           </p>
         </mat-card-content>
         <mat-card-actions>
-          <button mat-raised-button color="primary" [routerLink]="['detail',session.id]">
+          <button
+            mat-raised-button color="primary"
+            [routerLink]="['detail',session.id]"
+            [attr.data-testid]="'detail-button-' + session.id"
+          >
             <mat-icon>search</mat-icon>
             <span class="ml1">Detail</span>
           </button>
