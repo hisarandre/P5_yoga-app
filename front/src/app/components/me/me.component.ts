@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, NgZone, OnInit} from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { User } from '../../interfaces/user.interface';
@@ -17,6 +17,7 @@ export class MeComponent implements OnInit {
   constructor(private router: Router,
               private sessionService: SessionService,
               private matSnackBar: MatSnackBar,
+              private ngZone: NgZone,
               private userService: UserService) {
   }
 
@@ -36,7 +37,9 @@ export class MeComponent implements OnInit {
       .subscribe((_) => {
         this.matSnackBar.open("Your account has been deleted !", 'Close', { duration: 3000 });
         this.sessionService.logOut();
-        this.router.navigate(['/']);
+        this.ngZone.run(() => {
+          this.router.navigate(['/']);
+        });
       })
   }
 

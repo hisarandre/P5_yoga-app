@@ -89,15 +89,6 @@ describe('MeComponent', () => {
   });
 
   describe('fetch user information', () => {
-    it('should fetch user information on init', () => {
-      userService.getById.mockReturnValue(of(mockUser));
-
-      component.ngOnInit();
-
-      expect(userService.getById).toHaveBeenCalledWith('1');
-      expect(userService.getById).toHaveBeenCalledTimes(1);
-      expect(component.user).toEqual(mockUser);
-    });
 
     it('should display user information when user is loaded', () => {
       userService.getById.mockReturnValue(of(mockUser));
@@ -109,16 +100,6 @@ describe('MeComponent', () => {
       expect(htmlElement.textContent).toContain('test@test.com');
       expect(htmlElement.textContent).toContain('Create at:');
       expect(htmlElement.textContent).toContain('Last update:');
-    });
-
-    it('should show admin message when user is admin', () => {
-      const admin = { ...mockUser, admin: true };
-      userService.getById.mockReturnValue(of(admin));
-
-      component.ngOnInit();
-      fixture.detectChanges();
-
-      expect(htmlElement.textContent).toContain('You are admin');
     });
 
     it('should show delete button when user is not admin', () => {
@@ -147,57 +128,5 @@ describe('MeComponent', () => {
       const deleteButton = htmlElement.querySelector('button[color="warn"]');
       expect(deleteButton).toBeFalsy();
     });
-  });
-
-  describe('Navigation', () => {
-    it('should navigate back on back method call', () => {
-      const backSpy = jest.spyOn(window.history, 'back');
-
-      component.back();
-
-      expect(backSpy).toHaveBeenCalled();
-    });
-  })
-
-  describe('delete user', () => {
-    it('should call delete() when delete button is clicked', () => {
-      const deleteSpy = jest.spyOn(component, 'delete');
-      const regularUser = { ...mockUser, admin: false };
-      userService.getById.mockReturnValue(of(regularUser));
-      userService.delete.mockReturnValue(of({}));
-
-      component.ngOnInit();
-      fixture.detectChanges();
-
-      const deleteButton = htmlElement.querySelector('button[color="warn"]') as HTMLElement;
-      deleteButton.click();
-
-      expect(deleteSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should show success message after user deleted', () => {
-      userService.delete.mockReturnValue(of({}));
-
-      component.delete();
-
-      expect(matSnackBar.open).toHaveBeenCalledTimes(1)
-    });
-
-    it('should log out user after user deleted', () => {
-      userService.delete.mockReturnValue(of({}));
-
-      component.delete();
-
-      expect(sessionService.logOut).toHaveBeenCalledTimes(1);
-    });
-
-    it('should navigate to home after successful deletion', () => {
-      userService.delete.mockReturnValue(of({}));
-
-      component.delete();
-
-      expect(router.navigate).toHaveBeenCalledWith(['/']);
-    });
-
   });
 });

@@ -102,4 +102,25 @@ describe('RegisterComponent Integration Test suites', () => {
     expect(component.form.valid).toBe(true);
     expect(location.path()).toBe('/login');
   }));
+
+  it('should not submit when form is missing required fields', fakeAsync(() => {
+    // arrange - set empty form
+    component.form.setValue({
+      email: '',
+      firstName: '',
+      lastName: '',
+      password: ''
+    });
+    fixture.detectChanges();
+
+    // act
+    clickSubmitButton();
+    tick();
+
+    // assert
+    expect(component.form.valid).toBe(false);
+    expect(component.onError).toBe(false);
+    httpMock.expectNone('api/auth/register');
+    expect(location.path()).toBe(''); // Should stay on register page
+  }));
 });

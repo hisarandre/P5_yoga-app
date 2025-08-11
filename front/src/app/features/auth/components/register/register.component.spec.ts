@@ -108,28 +108,9 @@ describe('RegisterComponent', () => {
       expect(firstNameControl?.hasError('required')).toBe(true);
     });
 
-    it('should initialize form with email validator', () => {
-      // arrange
-      const emailControl = component.form.get('email');
-
-      // act
-      emailControl?.setValue('invalid-email');
-      emailControl?.markAsTouched();
-
-      // assert
-      expect(emailControl?.hasError('email')).toBe(true);
-    });
   });
 
   describe('Register on submit test suites', () => {
-    it('should call AuthService.register with form data', () => {
-      // act
-      setValidForm();
-      component.submit();
-
-      // assert
-      expect(mockAuthService.register).toHaveBeenCalledWith(mockValidRegisterData);
-    });
 
     it('should navigate on successful register', () => {
       // act

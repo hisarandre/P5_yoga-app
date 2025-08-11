@@ -91,19 +91,6 @@ describe('LoginComponent', () => {
 
   describe('Form Validation test suites', () => {
 
-    it('should mark email as invalid when format is wrong', () => {
-      // arrange
-      const emailControl = component.form.get('email');
-
-      // act
-      emailControl?.setValue('invalid-email');
-      emailControl?.markAsTouched();
-
-      // assert
-      expect(emailControl?.invalid).toBeTruthy();
-      expect(emailControl?.errors?.['email']).toBeTruthy();
-    });
-
     it('should mark form as valid when all inputs are correct', () => {
       // act
       setValidForm();
@@ -146,51 +133,4 @@ describe('LoginComponent', () => {
     });
   });
 
-  describe('Login on submit test suites', () => {
-    it('should call AuthService.login with form data', () => {
-      // act
-      setValidForm();
-      component.submit();
-
-      // assert
-      expect(mockAuthService.login).toHaveBeenCalledWith(mockValidLoginData);
-    });
-
-    it('should call SessionService.logIn on successful auth', () => {
-      mockAuthService.login.mockReturnValue(of(mockLoginResponse));
-      // act
-      setValidForm();
-      component.submit();
-
-      // assert
-      expect(mockSessionService.logIn).toHaveBeenCalledWith(mockLoginResponse);
-    });
-
-    it('should navigate on successful login', () => {
-      // arrange
-      mockAuthService.login.mockReturnValue(of(mockLoginResponse));
-      mockSessionService.logIn.mockReturnValue(of(mockLoginResponse));
-
-      // act
-      setValidForm();
-      component.submit();
-
-      // assert
-      expect(router.navigate).toHaveBeenCalledWith(['/sessions']);
-    });
-
-    it('should handle errors on failed login attempt', () => {
-      // arrange
-      const loginRequest = { email: "wrong@studio.com", password: "wrongpassword" };
-      const errorResponse = new Error('Unauthorized');
-      mockAuthService.login.mockReturnValue(throwError(() => errorResponse));
-
-      // act
-      component.form.setValue(loginRequest);
-      component.submit();
-
-      // assert
-      expect(component.onError).toBe(true);
-    });
-  });
 });

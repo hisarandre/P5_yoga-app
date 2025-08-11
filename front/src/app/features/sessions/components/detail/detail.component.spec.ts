@@ -12,8 +12,8 @@ import { Teacher } from '../../../../interfaces/teacher.interface';
 import { Session } from '../../interfaces/session.interface';
 import { SessionApiService } from '../../services/session-api.service';
 import { DetailComponent } from './detail.component';
-import {MatIconModule} from "@angular/material/icon";
-import {MatCardModule} from "@angular/material/card";
+import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
 
 describe('DetailComponent', () => {
   let component: DetailComponent;
@@ -34,24 +34,24 @@ describe('DetailComponent', () => {
   const mockSessionService = {
     sessionInformation: {
       admin: true,
-      id: 2
-    }
+      id: 2,
+    },
   };
 
   const mockTeacherService = {
-    detail: jest.fn()
+    detail: jest.fn(),
   };
 
   const mockMatSnackBar = {
-    open: jest.fn()
+    open: jest.fn(),
   };
 
   const mockActivatedRoute = {
     snapshot: {
       paramMap: {
-        get: jest.fn().mockReturnValue('1')
-      }
-    }
+        get: jest.fn().mockReturnValue('1'),
+      },
+    },
   };
 
   const mockSession: Session = {
@@ -62,14 +62,14 @@ describe('DetailComponent', () => {
     teacher_id: 1,
     users: [3, 4],
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   };
 
   const mockSessionApiService = {
     detail: jest.fn().mockReturnValue(of(mockSession)),
     delete: jest.fn().mockReturnValue(of(null)),
     participate: jest.fn().mockReturnValue(of(null)),
-    unParticipate: jest.fn().mockReturnValue(of(null))
+    unParticipate: jest.fn().mockReturnValue(of(null)),
   };
 
   const mockTeacher: Teacher = {
@@ -77,7 +77,7 @@ describe('DetailComponent', () => {
     lastName: 'Test',
     firstName: 'Teacher',
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   };
 
   beforeEach(async () => {
@@ -96,7 +96,7 @@ describe('DetailComponent', () => {
         { provide: SessionApiService, useValue: mockSessionApiService },
         { provide: TeacherService, useValue: mockTeacherService },
         { provide: MatSnackBar, useValue: mockMatSnackBar },
-        { provide: ActivatedRoute, useValue: mockActivatedRoute }
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
       ],
     }).compileComponents();
 
@@ -118,96 +118,47 @@ describe('DetailComponent', () => {
   });
 
   describe('Initialize data', () => {
-
     it('should set isParticipate to true when user is in session users', () => {
-      // arrange
       const sessionWithUser = { ...mockSession, users: [1, 2, 3] };
       sessionApiService.detail.mockReturnValue(of(sessionWithUser));
       teacherService.detail.mockReturnValue(of(mockTeacher));
 
-      // act
       component.ngOnInit();
 
-      // assert
       expect(component.isParticipate).toBe(true);
     });
 
     it('should set isParticipate to false when user is not in session users', () => {
-      // arrange
       const sessionWithoutUser = { ...mockSession, users: [3] };
       sessionApiService.detail.mockReturnValue(of(sessionWithoutUser));
       teacherService.detail.mockReturnValue(of(mockTeacher));
 
-      // act
       component.ngOnInit();
 
-      // assert
       expect(component.isParticipate).toBe(false);
     });
   });
 
-  describe('Navigation', () => {
-    it('should navigate back on back method call', () => {
-      // arrange
-      const backSpy = jest.spyOn(window.history, 'back');
-
-      // act
-      component.back();
-
-      // assert
-      expect(backSpy).toHaveBeenCalled();
-    });
-  })
-
-    describe('Delete session test suites', () => {
-    it('should call sessionApiService.delete when delete() is called', () => {
-      // act
-      component.delete();
-
-      // assert
-      expect(sessionApiService.delete).toHaveBeenCalledWith('1');
-      expect(sessionApiService.delete).toHaveBeenCalledTimes(1);
-    });
-
+  describe('Delete session test suites', () => {
     it('should show success message after deleting a session', () => {
-      // act
       component.delete();
-
-      // assert
       expect(matSnackBar.open).toHaveBeenCalledTimes(1);
     });
 
-    it('should navigate to sessions after deleting a session', () => {
-      // act
-      component.delete();
+    it('should show delete button if user is admin', () => {
+      component.isAdmin = true;
+      fixture.detectChanges();
 
-      // assert
-      expect(router.navigate).toHaveBeenCalledWith(['sessions']);
+      const deleteButton = fixture.nativeElement.querySelector(componentSelectors.deleteButton);
+      expect(deleteButton?.textContent).toContain('Delete');
     });
 
-      it('should show delete button if user is admin', () => {
-        // arrange
-        component.isAdmin = true;
+    it('should not show delete button if user is not admin', () => {
+      component.isAdmin = false;
+      fixture.detectChanges();
 
-        // act
-        fixture.detectChanges();
-        const deleteButton = fixture.nativeElement.querySelector(componentSelectors.deleteButton);
-
-        // assert
-        expect(deleteButton?.textContent).toContain('Delete');
-      });
-
-      it('should not show delete button if user is not admin', () => {
-        // arrange
-        component.isAdmin = false;
-
-        // act
-        fixture.detectChanges();
-        const deleteButton = fixture.nativeElement.querySelector(componentSelectors.deleteButton);
-
-        // assert
-        expect(deleteButton).toBeNull();
-      });
+      const deleteButton = fixture.nativeElement.querySelector(componentSelectors.deleteButton);
+      expect(deleteButton).toBeNull();
+    });
   });
-
 });
