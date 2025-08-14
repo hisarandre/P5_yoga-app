@@ -41,7 +41,7 @@ describe('Login spec', () => {
 
   it('Login successfull', () => {
     // arrange
-    cy.fixture('adminLoginResponse').then((admin) => {
+    cy.fixture('auth/adminLoginResponse').then((admin) => {
       cy.intercept('POST', urls.loginApi, admin).as('loginSuccess')
     })
 

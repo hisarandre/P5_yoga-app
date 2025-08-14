@@ -13,7 +13,7 @@ describe('Logout spec', () => {
 
   // tests
   beforeEach(() => {
-    cy.fixture('sessions').then((sessions) => {
+    cy.fixture('sessions/sessions').then((sessions) => {
       cy.intercept('GET', urls.sessionApi, sessions).as('sessions')
     })
 
