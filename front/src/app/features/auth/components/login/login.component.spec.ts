@@ -99,28 +99,21 @@ describe('LoginComponent', () => {
       expect(component.form.valid).toBeTruthy();
     });
 
-    it('should require email', () => {
+    it('should require form inputs', () => {
       // arrange
       const emailControl = component.form.get('email');
+      const passwordControl = component.form.get('password');
 
       // act
       emailControl?.setValue('');
       emailControl?.markAsTouched();
-
-      // assert
-      expect(emailControl?.errors?.['required']).toBeTruthy();
-    });
-
-    it('should require password', () => {
-      // arrange
-      const passwordControl = component.form.get('password');
-
-      // act
       passwordControl?.setValue('');
       passwordControl?.markAsTouched();
 
       // assert
+      expect(emailControl?.errors?.['required']).toBeTruthy();
       expect(passwordControl?.errors?.['required']).toBeTruthy();
+
     });
 
     it('should disable submit button when form is invalid', () => {

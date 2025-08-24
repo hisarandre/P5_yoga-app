@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -30,7 +30,8 @@ export class DetailComponent implements OnInit {
     private sessionApiService: SessionApiService,
     private teacherService: TeacherService,
     private matSnackBar: MatSnackBar,
-    private router: Router) {
+    private router: Router,
+    private ngZone: NgZone) {
     this.sessionId = this.route.snapshot.paramMap.get('id')!;
     this.isAdmin = this.sessionService.sessionInformation!.admin;
     this.userId = this.sessionService.sessionInformation!.id.toString();
@@ -49,7 +50,9 @@ export class DetailComponent implements OnInit {
       .delete(this.sessionId)
       .subscribe((_: any) => {
           this.matSnackBar.open('Session deleted !', 'Close', { duration: 3000 });
-          this.router.navigate(['sessions']);
+          this.ngZone.run(() => {
+            this.router.navigate(['sessions']);
+          });
         }
       );
   }
@@ -73,5 +76,4 @@ export class DetailComponent implements OnInit {
           .subscribe((teacher: Teacher) => this.teacher = teacher);
       });
   }
-
 }

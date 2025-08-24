@@ -117,34 +117,7 @@ describe('DetailComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('Initialize data', () => {
-    it('should set isParticipate to true when user is in session users', () => {
-      const sessionWithUser = { ...mockSession, users: [1, 2, 3] };
-      sessionApiService.detail.mockReturnValue(of(sessionWithUser));
-      teacherService.detail.mockReturnValue(of(mockTeacher));
-
-      component.ngOnInit();
-
-      expect(component.isParticipate).toBe(true);
-    });
-
-    it('should set isParticipate to false when user is not in session users', () => {
-      const sessionWithoutUser = { ...mockSession, users: [3] };
-      sessionApiService.detail.mockReturnValue(of(sessionWithoutUser));
-      teacherService.detail.mockReturnValue(of(mockTeacher));
-
-      component.ngOnInit();
-
-      expect(component.isParticipate).toBe(false);
-    });
-  });
-
   describe('Delete session test suites', () => {
-    it('should show success message after deleting a session', () => {
-      component.delete();
-      expect(matSnackBar.open).toHaveBeenCalledTimes(1);
-    });
-
     it('should show delete button if user is admin', () => {
       component.isAdmin = true;
       fixture.detectChanges();

@@ -8,7 +8,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Component } from '@angular/core';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations'; // Add this import
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { expect } from '@jest/globals';
 
 import { MeComponent } from './me.component';
@@ -34,7 +34,7 @@ describe('MeComponent Delete Integration Tests', () => {
     email: 'test@test.com',
     lastName: 'Test',
     firstName: 'User',
-    admin: false, // Non-admin user so delete button appears
+    admin: false,
     password: '',
     createdAt: new Date(),
     updatedAt: new Date()
@@ -68,7 +68,7 @@ describe('MeComponent Delete Integration Tests', () => {
           { path: '', component: MockHomeComponent }
         ]),
         HttpClientTestingModule,
-        NoopAnimationsModule, // Add this module to disable animations in tests
+        NoopAnimationsModule,
         MatSnackBarModule,
         MatCardModule,
         MatFormFieldModule,
@@ -130,5 +130,4 @@ describe('MeComponent Delete Integration Tests', () => {
     expect(logOutSpy).toHaveBeenCalledTimes(1);
     expect(navigateSpy).toHaveBeenCalledWith(['/']);
   }));
-
 });
