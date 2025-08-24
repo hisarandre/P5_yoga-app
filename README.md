@@ -4,10 +4,7 @@
 
 Yoga-app is a full-stack application designed to manage sessions, teachers, and users.
 
----
-
 ## 🚀 Installation
-
 
 Before installing the application, start by cloning the project from GitHub:
 
@@ -17,7 +14,6 @@ cd P5_yoga-app
 ```
 
 ### 🛠️ Requirements
-
 
 
 | Technology      | Version        | Description                            |
@@ -71,12 +67,9 @@ cd P5_yoga-app
    ```
 4. The frontend will be accessible at **[http://localhost:4200](http://localhost:4200)**
 
----
-
-## ✅ Application Usage
 
 
-### 📌 Authentication
+## 📌 Authentication
 
 The application uses a JWT authentication system.
 
@@ -113,7 +106,7 @@ Test results and the coverage report are generated at:
 front/coverage/combined-report/lcov-report/index.html
 ```
 
-### 3️⃣ End-to-End Tests (Cypress)
+### End-to-End Tests 
 
 Run E2E tests with:
 
