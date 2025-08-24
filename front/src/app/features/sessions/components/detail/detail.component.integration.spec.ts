@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {ComponentFixture, TestBed, fakeAsync, tick, flush} from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -11,6 +11,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { expect } from '@jest/globals';
 import {Component, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { DetailComponent } from './detail.component';
 import { SessionApiService } from '../../services/session-api.service';
@@ -31,6 +32,7 @@ describe('DetailComponent Integration Tests - Participate/Unparticipate', () => 
   const componentSelectors = {
     participateButton: '[data-testid="participate-button"]',
     unParticipateButton: '[data-testid="unparticipate-button"]',
+    deleteButton: '[data-testid="delete-button"]'
   };
 
   const mockSessionService = {
@@ -89,6 +91,12 @@ describe('DetailComponent Integration Tests - Participate/Unparticipate', () => 
     fixture.detectChanges();
   };
 
+  const clickDeleteButton = () => {
+    const deleteButton = fixture.nativeElement.querySelector(componentSelectors.deleteButton) as HTMLButtonElement;
+    deleteButton?.click();
+    fixture.detectChanges();
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [DetailComponent],
@@ -100,7 +108,10 @@ describe('DetailComponent Integration Tests - Participate/Unparticipate', () => 
       ],
       imports: [
         HttpClientTestingModule,
-        BrowserAnimationsModule,
+        NoopAnimationsModule,
+        RouterTestingModule.withRoutes([
+          { path: 'sessions', component: class MockSessionsComponent {} }
+        ]),
         MatCardModule,
         MatIconModule,
         MatSnackBarModule,
@@ -200,5 +211,61 @@ describe('DetailComponent Integration Tests - Participate/Unparticipate', () => 
       expect(component.session?.users.length).toBe(2);
     }));
 
+    it('should delete session, show snackbar and navigate to sessions page when admin clicks delete', fakeAsync(() => {
+      // arrange
+      const detailReq = httpMock.expectOne('api/session/1');
+      detailReq.flush(mockSession);
+
+      const teacherReq = httpMock.expectOne('api/teacher/1');
+      teacherReq.flush(mockTeacher);
+
+      tick();
+      fixture.detectChanges();
+
+      // Set component to admin for this test
+      component.isAdmin = true;
+      fixture.detectChanges();
+
+      const snackBarSpy = jest.spyOn(component['matSnackBar'], 'open');
+
+      // act
+      clickDeleteButton();
+
+      const deleteReq = httpMock.expectOne('api/session/1');
+      expect(deleteReq.request.method).toBe('DELETE');
+      deleteReq.flush({ message: 'Session deleted successfully' });
+
+      tick();
+      tick(3000); // snackbar duration
+      fixture.detectChanges();
+
+      // assert
+      expect(snackBarSpy).toHaveBeenCalledWith('Session deleted !', 'Close', { duration: 3000 });
+      expect(location.path()).toBe('/sessions');
+
+      flush();
+    }));
+
+    it('should not show delete button when user is not admin', fakeAsync(() => {
+      // arrange
+      const detailReq = httpMock.expectOne('api/session/1');
+      detailReq.flush(mockSession);
+
+      const teacherReq = httpMock.expectOne('api/teacher/1');
+      teacherReq.flush(mockTeacher);
+
+      tick();
+      fixture.detectChanges();
+
+      component.isAdmin = false;
+      fixture.detectChanges();
+
+      // act & assert
+      const deleteButton = fixture.nativeElement.querySelector(componentSelectors.deleteButton) as HTMLButtonElement;
+      expect(deleteButton).toBeNull();
+      httpMock.expectNone('api/session/1');
+
+      flush();
+    }));
   });
 });

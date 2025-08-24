@@ -9,7 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { Component } from '@angular/core';
 import { SessionService } from '../../../../services/session.service';
@@ -21,6 +21,9 @@ import { SessionInformation } from '../../../../interfaces/sessionInformation.in
 
 @Component({ template: '' })
 class MockSessionsComponent {}
+
+@Component({ template: '' })
+class MockSessionsUpdateComponent {}
 
 describe('FormComponent Integration', () => {
   let component: FormComponent;
@@ -55,6 +58,20 @@ describe('FormComponent Integration', () => {
     teacher_id: 2,
   };
 
+  const mockTeachers = [
+    { id: 1, firstName: 'John', lastName: 'Doe' },
+    { id: 2, firstName: 'Jane', lastName: 'Smith' }
+  ];
+
+  const mockSession = {
+    id: 1,
+    name: 'Existing Session',
+    description: 'Existing Description',
+    date: '2025-01-15T00:00:00.000Z',
+    teacher_id: 2,
+    users: []
+  };
+
   const clickOnSubmitButton = () => {
     const submitButton = fixture.nativeElement.querySelector(
       '[data-testid="submit-button"]'
@@ -65,9 +82,13 @@ describe('FormComponent Integration', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [FormComponent, MockSessionsComponent],
+      declarations: [FormComponent, MockSessionsComponent, MockSessionsUpdateComponent],
       imports: [
-        RouterTestingModule.withRoutes([{ path: 'sessions', component: MockSessionsComponent }]),
+        RouterTestingModule.withRoutes([
+          { path: 'sessions', component: MockSessionsComponent },
+          { path: 'sessions/create', component: FormComponent },
+          { path: 'sessions/update/:id', component: MockSessionsUpdateComponent }
+        ]),
         HttpClientTestingModule,
         ReactiveFormsModule,
         MatSnackBarModule,
@@ -101,62 +122,58 @@ describe('FormComponent Integration', () => {
     httpMock.verify();
   });
 
-  it('should create a new session, show snackbar, and navigate to /sessions', fakeAsync(() => {
-    // arrange
-    component.onUpdate = false;
-    component.sessionForm!.setValue(validFormData);
-    fixture.detectChanges();
+  describe('Form Submission Integration', () => {
+    it('should create a new session, show snackbar, and navigate to /sessions', fakeAsync(() => {
+      // arrange
+      component.onUpdate = false;
+      component.sessionForm!.setValue(validFormData);
+      fixture.detectChanges();
 
-    const snackBarSpy = jest.spyOn(snackBar, 'open');
+      const snackBarSpy = jest.spyOn(snackBar, 'open');
 
-    // act
-    clickOnSubmitButton();
+      // act
+      clickOnSubmitButton();
 
-    const req = httpMock.expectOne('api/session');
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(validFormData);
-    req.flush({ message: 'Session created successfully!' });
+      const req = httpMock.expectOne('api/session');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(validFormData);
+      req.flush({ message: 'Session created successfully!' });
 
-    tick();
-    tick(3000); // snackbar duration
-    fixture.detectChanges();
+      tick();
+      tick(3000); // snackbar duration
+      fixture.detectChanges();
 
-    // assert
-    expect(snackBarSpy).toHaveBeenCalledWith('Session created !', 'Close', { duration: 3000 });
-    expect(location.path()).toBe('/sessions');
-  }));
+      // assert
+      expect(snackBarSpy).toHaveBeenCalledWith('Session created !', 'Close', { duration: 3000 });
+      expect(location.path()).toBe('/sessions');
+    }));
 
-  it('should update existing session, show snackbar, and navigate to /sessions', fakeAsync(() => {
-    // arrange
-    const sessionId = '1';
-    const updatedData = {
-      name: 'Updated Name',
-      description: 'Updated Description',
-      date: '2025-01-01',
-      teacher_id: 2
-    };
+    it('should update existing session, show snackbar, and navigate to /sessions', fakeAsync(() => {
+      // arrange
+      const sessionId = '1';
 
-    component.onUpdate = true;
-    component.id = sessionId;
-    component.sessionForm!.setValue(updatedData);
-    fixture.detectChanges();
+      component.onUpdate = true;
+      component.id = sessionId;
+      component.sessionForm!.setValue(updatedFormData);
+      fixture.detectChanges();
 
-    const snackBarSpy = jest.spyOn(snackBar, 'open');
+      const snackBarSpy = jest.spyOn(snackBar, 'open');
 
-    // act
-    clickOnSubmitButton();
+      // act
+      clickOnSubmitButton();
 
-    const req = httpMock.expectOne(`api/session/${sessionId}`);
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual(updatedData);
-    req.flush({ message: 'Session updated!' }, { status: 200, statusText: 'OK' });
+      const req = httpMock.expectOne(`api/session/${sessionId}`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual(updatedFormData);
+      req.flush({ message: 'Session updated!' }, { status: 200, statusText: 'OK' });
 
-    tick();
-    tick(3000);
-    fixture.detectChanges();
+      tick();
+      tick(3000);
+      fixture.detectChanges();
 
-    // assert
-    expect(snackBarSpy).toHaveBeenCalledWith('Session updated !', 'Close', { duration: 3000 });
-    expect(location.path()).toBe('/sessions');
-  }));
+      // assert
+      expect(snackBarSpy).toHaveBeenCalledWith('Session updated !', 'Close', { duration: 3000 });
+      expect(location.path()).toBe('/sessions');
+    }));
+  });
 });

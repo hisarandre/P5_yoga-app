@@ -143,49 +143,6 @@ describe('FormComponent', () => {
     });
   });
 
-  describe('Form submission', () => {
-
-    it('should create a new session when in create mode', () => {
-      // arrange
-      const exitPageSpy = jest.spyOn(component as any, 'exitPage');
-      mockRouter.url = '/sessions/create';
-      fixture.detectChanges();
-
-      component.ngOnInit();
-      component.sessionForm?.setValue(mockNewSession);
-
-      // act
-      component.submit();
-
-      // assert
-      expect(mockSessionApiService.create).toHaveBeenCalledWith(mockNewSession);
-      expect(mockSessionApiService.create).toHaveBeenCalledTimes(1);
-      expect(exitPageSpy).toHaveBeenCalledWith('Session created !');
-    });
-
-    it('should update existing session when in update mode', () => {
-      // arrange
-      const exitPageSpy = jest.spyOn(component as any, 'exitPage');
-      mockRouter.url = '/sessions/update/1';
-      fixture.detectChanges();
-
-      component.ngOnInit();
-      component.sessionForm?.setValue(mockUpdateSession);
-
-      // act
-      component.submit();
-
-      // assert
-      expect(mockSessionApiService.update).toHaveBeenCalledWith(
-        mockSession.id.toString(),
-        mockUpdateSession
-      );
-      expect(mockSessionApiService.update).toHaveBeenCalledTimes(1);
-      expect(exitPageSpy).toHaveBeenCalledWith('Session updated !');
-    });
-
-  });
-
   describe('Form validation', () => {
 
     beforeEach(() => {

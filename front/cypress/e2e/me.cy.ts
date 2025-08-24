@@ -18,7 +18,7 @@ describe('Account spec', () => {
     cy.adminLogin();
 
     // act
-    cy.fixture('admin').then((admin) => {
+    cy.fixture('auth/admin').then((admin) => {
       cy.intercept({method: 'GET', url: urls.userApi + '1'}, admin).as('adminUser')
     })
 
@@ -36,7 +36,7 @@ describe('Account spec', () => {
     cy.userLogin();
 
     // act
-    cy.fixture('user').then((user) => {
+    cy.fixture('auth/user').then((user) => {
       cy.intercept('GET', urls.userApi + '2', user).as('userRequest');
     });
 

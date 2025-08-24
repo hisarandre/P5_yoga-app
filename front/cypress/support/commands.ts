@@ -32,7 +32,7 @@ const login = (fixtureName, alias) => {
   cy.visit(urls.loginUrl);
 
   cy.fixture(fixtureName).then((response) => {
-    cy.fixture('sessions').as('sessions');
+    cy.fixture('sessions/sessions').as('sessions');
 
     cy.get('@sessions').then((sessions) => {
       cy.intercept('GET', urls.sessionApi, sessions).as('getSessions');
@@ -50,9 +50,9 @@ const login = (fixtureName, alias) => {
 
 // Commands
 Cypress.Commands.add('adminLogin', () => {
-  login('adminLoginResponse', 'adminLogin');
+  login('auth/adminLoginResponse', 'adminLogin');
 });
 
 Cypress.Commands.add('userLogin', () => {
-  login('userLoginResponse', 'userLogin');
+  login('auth/userLoginResponse', 'userLogin');
 });

@@ -83,7 +83,7 @@ describe('RegisterComponent', () => {
       expect(submitButton.disabled).toBe(false);
     });
 
-    it('should initialize form with required validators', () => {
+    it('should requires form inputs', () => {
       // arrange
       const emailControl = component.form.get('email');
       const passwordControl = component.form.get('password');
@@ -106,19 +106,6 @@ describe('RegisterComponent', () => {
       expect(passwordControl?.hasError('required')).toBe(true);
       expect(lastNameControl?.hasError('required')).toBe(true);
       expect(firstNameControl?.hasError('required')).toBe(true);
-    });
-
-  });
-
-  describe('Register on submit test suites', () => {
-
-    it('should navigate on successful register', () => {
-      // act
-      setValidForm();
-      component.submit();
-
-      // assert
-      expect(router.navigate).toHaveBeenCalledWith(['/login']);
     });
   });
 });
