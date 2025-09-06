@@ -58,20 +58,6 @@ describe('FormComponent Integration', () => {
     teacher_id: 2,
   };
 
-  const mockTeachers = [
-    { id: 1, firstName: 'John', lastName: 'Doe' },
-    { id: 2, firstName: 'Jane', lastName: 'Smith' }
-  ];
-
-  const mockSession = {
-    id: 1,
-    name: 'Existing Session',
-    description: 'Existing Description',
-    date: '2025-01-15T00:00:00.000Z',
-    teacher_id: 2,
-    users: []
-  };
-
   const clickOnSubmitButton = () => {
     const submitButton = fixture.nativeElement.querySelector(
       '[data-testid="submit-button"]'
