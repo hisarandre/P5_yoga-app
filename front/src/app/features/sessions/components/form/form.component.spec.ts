@@ -21,8 +21,6 @@ describe('FormComponent', () => {
   let component: FormComponent;
   let fixture: ComponentFixture<FormComponent>;
   let mockSessionApiService: jest.Mocked<SessionApiService>;
-  let mockSessionService: any;
-  let mockRouter: any;
 
   const mockSession = {
     id: 1,
@@ -49,32 +47,34 @@ describe('FormComponent', () => {
     teacher_id: 2
   };
 
+
+  let mockSessionService = {
+    sessionInformation: {
+      admin: true
+    }
+  };
+
+  let mockRouter = {
+    navigate: jest.fn(),
+    url: '/sessions/create'
+  };
+
+  const mockSessionApiServiceMethods = {
+    detail: jest.fn().mockReturnValue(of(mockSession)),
+    create: jest.fn().mockReturnValue(of(mockNewSession)),
+    update: jest.fn().mockReturnValue(of(mockUpdateSession))
+  };
+
+  const mockActivatedRoute = {
+    snapshot: {
+      paramMap: {
+        get: jest.fn().mockReturnValue(mockSession.id.toString())
+      },
+      root: {}
+    }
+  };
+
   beforeEach(async () => {
-    mockSessionService = {
-      sessionInformation: {
-        admin: true
-      }
-    };
-
-    const mockSessionApiServiceMethods = {
-      detail: jest.fn().mockReturnValue(of(mockSession)),
-      create: jest.fn().mockReturnValue(of(mockNewSession)),
-      update: jest.fn().mockReturnValue(of(mockUpdateSession))
-    };
-
-    const mockActivatedRoute = {
-      snapshot: {
-        paramMap: {
-          get: jest.fn().mockReturnValue(mockSession.id.toString())
-        },
-        root: {}
-      }
-    };
-
-    mockRouter = {
-      navigate: jest.fn(),
-      url: '/sessions/create'
-    };
 
     await TestBed.configureTestingModule({
       imports: [

@@ -72,14 +72,6 @@ describe('DetailComponent', () => {
     unParticipate: jest.fn().mockReturnValue(of(null)),
   };
 
-  const mockTeacher: Teacher = {
-    id: 1,
-    lastName: 'Test',
-    firstName: 'Teacher',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
